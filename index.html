@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>SIUKHINA EDITION — Flappy Іволга</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      background: url('https://i.imgur.com/1eDGrgb.jpg') no-repeat center center;
+      background-size: cover;
+    }
+    #title {
+      position: absolute;
+      top: 10px;
+      width: 100%;
+      text-align: center;
+      font-family: sans-serif;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px #000;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div id="title">SIUKHINA EDITION</div>
+  <canvas id="gameCanvas" width="480" height="640"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const birdImg = new Image();
+    birdImg.src = 'https://i.imgur.com/JkmQeBG.png'; // Іволга
+
+    let bird = { x: 80, y: 150, width: 50, height: 35, gravity: 0, speed: 0 };
+    const gravity = 0.5;
+    const jump = -8;
+    const pipes = [];
+    const pipeWidth = 60;
+    const gap = 150;
+    let score = 0;
+
+    function playSound() {
+      const sounds = [
+        'https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg',
+        'https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg',
+        'https://actions.google.com/sounds/v1/cartoon/slide_whistle_to_drum_hit.ogg'
+      ];
+      const sound = new Audio(sounds[Math.floor(Math.random() * sounds.length)]);
+      sound.play();
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.code === 'Space') {
+        bird.speed = jump;
+        playSound();
+      }
+    });
+
+    function drawBird() {
+      ctx.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+    }
+
+    function drawPipes() {
+      pipes.forEach(pipe => {
+        ctx.fillStyle = 'green';
+        ctx.fillRect(pipe.x, 0, pipeWidth, pipe.top);
+        ctx.fillRect(pipe.x, pipe.top + gap, pipeWidth, canvas.height - pipe.top - gap);
+      });
+    }
+
+    function updatePipes() {
+      if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 200) {
+        let top = Math.random() * 200 + 50;
+        pipes.push({ x: canvas.width, top });
+      }
+
+      pipes.forEach(pipe => {
+        pipe.x -= 2;
+        if (!pipe.passed && pipe.x + pipeWidth < bird.x) {
+          score++;
+          pipe.passed = true;
+        }
+      });
+    }
+
+    function checkCollision() {
+      if (bird.y + bird.height > canvas.height || bird.y < 0) return true;
+      return pipes.some(pipe => {
+        return (
+          bird.x < pipe.x + pipeWidth &&
+          bird.x + bird.width > pipe.x &&
+          (bird.y < pipe.top || bird.y + bird.height > pipe.top + gap)
+        );
+      });
+    }
+
+    function drawScore() {
+      ctx.fillStyle = 'white';
+      ctx.font = '28px sans-serif';
+      ctx.fillText('Очки: ' + score, 20, 40);
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      bird.speed += gravity;
+      bird.y += bird.speed;
+
+      updatePipes();
+      drawPipes();
+      drawBird();
+      drawScore();
+
+      if (checkCollision()) {
+        alert('Кінець гри! Ваш рахунок: ' + score);
+        document.location.reload();
+      } else {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    birdImg.onload = () => {
+      gameLoop();
+    }
+  </script>
+</body>
+</html>
